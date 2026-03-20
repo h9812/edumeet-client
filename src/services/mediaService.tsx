@@ -613,8 +613,14 @@ export class MediaService extends EventEmitter {
 	}> {
 		try {
 			if (!this.mediasoup.loaded) {
-				const { routerRtpCapabilities } = await this.signalingService.sendRequest('getRouterRtpCapabilities');
-	
+				const routerRtpCapabilitiesResponse = await this.signalingService.sendRequest('getRouterRtpCapabilities');
+				const routerRtpCapabilities =
+					routerRtpCapabilitiesResponse?.routerRtpCapabilities ?? routerRtpCapabilitiesResponse;
+
+				if (!routerRtpCapabilities || typeof routerRtpCapabilities !== 'object') {
+					throw new TypeError('Invalid getRouterRtpCapabilities response');
+				}
+
 				await this.mediasoup.load({ routerRtpCapabilities });
 			}
 
