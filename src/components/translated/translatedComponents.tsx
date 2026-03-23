@@ -454,6 +454,12 @@ export const enableAllMediaLabel = (): string => intl.formatMessage({
 	defaultMessage: 'Enable both Microphone And Camera'
 });
 
+export const chooseMediaLabel = (): string => intl.formatMessage({
+	id: 'devices.chooseMedia',
+	defaultMessage: 'Choose Media'
+});
+
+
 export const devicesChangedLabel = (): string => intl.formatMessage({
 	id: 'devices.devicesChanged',
 	defaultMessage: 'Your devices changed, configure your devices in the settings dialog'

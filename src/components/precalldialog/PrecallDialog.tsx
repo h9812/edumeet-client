@@ -1,23 +1,17 @@
-import { ReactNode } from 'react';
+import { MouseEvent, ReactNode, useState } from 'react';
 import {
-	DialogActions,
+	Button,
 	DialogContent,
 	DialogTitle,
 	Grid,
+	Menu,
+	MenuItem,
 	styled,
-	Typography,
-	useTheme
 } from '@mui/material';
 import StyledDialog from '../../components/dialog/StyledDialog';
-import edumeetConfig from '../../utils/edumeetConfig';
-import { useAppSelector } from '../../store/hooks';
-import { loginLabel, logoutLabel } from '../../components/translated/translatedComponents';
-import LoginButton from '../controlbuttons/LoginButton';
-
-interface PrecallDialogProps {
-	content?: ReactNode;
-	actions?: ReactNode;
-}
+import { useAppDispatch, useAppSelector } from '../../store/hooks';
+import { setLocale } from '../../store/actions/localeActions';
+import { localeList } from '../../utils/intlManager';
 
 const StyledDialogContent = styled(DialogContent)(({ theme }) => ({
 	'&.MuiDialogContent-root': {
@@ -25,17 +19,44 @@ const StyledDialogContent = styled(DialogContent)(({ theme }) => ({
 	}
 }));
 
+const LogoImg = styled('img')({
+	height: 36,
+	display: 'block',
+});
+
+interface PrecallDialogProps {
+	content?: ReactNode;
+}
+
 const PrecallDialog = ({
 	content,
-	actions
 }: PrecallDialogProps): JSX.Element => {
-	const theme = useTheme();
-	const loginEnabled = useAppSelector((state) => state.permissions.loginEnabled);
-	const loggedIn = useAppSelector((state) => state.permissions.loggedIn);
+	const dispatch = useAppDispatch();
+	const locale = useAppSelector((state) => state.settings.locale) ?? 'en';
+	const localeInProgress = useAppSelector((state) => state.room.localeInProgress);
+
+	const [ anchorEl, setAnchorEl ] = useState<null | HTMLElement>(null);
+
+	const currentLocale = localeList.find(
+		(l) => l.locale.some((lc) => locale.startsWith(lc))
+	) ?? localeList[0];
+
+	const handleOpenMenu = (event: MouseEvent<HTMLElement>) => {
+		setAnchorEl(event.currentTarget);
+	};
+
+	const handleCloseMenu = () => {
+		setAnchorEl(null);
+	};
+
+	const handleSelectLocale = (localeValue: string) => {
+		dispatch(setLocale(localeValue));
+		handleCloseMenu();
+	};
 
 	return (
 		<StyledDialog open>
-			<DialogTitle>
+			<DialogTitle sx={{ pb: 1 }}>
 				<Grid
 					container
 					direction='row'
@@ -43,55 +64,45 @@ const PrecallDialog = ({
 					alignItems='center'
 				>
 					<Grid item>
-						<Typography variant='h5'>Edumeet</Typography>
-						{ theme.logo ?
-							<img alt='Logo' src={theme.logo} /> :
-							<Typography variant='h5'> {edumeetConfig.title} </Typography>
-						}
+						<LogoImg alt='Logo' src='/images/logo_sumplus.png' />
 					</Grid>
 
 					<Grid item>
-						<Grid
-							container
-							direction='row'
-							justifyContent='flex-end'
-							alignItems='center'
+						<Button
+							onClick={handleOpenMenu}
+							disabled={localeInProgress}
+							size='small'
+							sx={{
+								fontWeight: 'bold',
+								minWidth: 0,
+								color: 'text.primary',
+							}}
 						>
-							{ loginEnabled &&
-								<Grid item>
-									<Grid container direction='column' alignItems='center'>
-										<Grid item>
-											<LoginButton
-												type='iconbutton'
-												toolTipLocation='left'
-											/>
-										</Grid>
-										<Grid item>
-											{ loggedIn ? logoutLabel() : loginLabel() }
-										</Grid>
-									</Grid>
-								</Grid>
-							}
-						</Grid>
+							{ currentLocale.file.toUpperCase() }
+						</Button>
+						<Menu
+							anchorEl={anchorEl}
+							open={Boolean(anchorEl)}
+							onClose={handleCloseMenu}
+							anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+							transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+						>
+							{ localeList.map(({ name, file, locale: localeValues }) => (
+								<MenuItem
+									key={file}
+									selected={currentLocale.file === file}
+									onClick={() => handleSelectLocale(localeValues[0])}
+								>
+									{ name }
+								</MenuItem>
+							)) }
+						</Menu>
 					</Grid>
 				</Grid>
 			</DialogTitle>
 			<StyledDialogContent>
 				{ content }
 			</StyledDialogContent>
-			<DialogActions>
-				<Grid
-					container
-					direction='row'
-					justifyContent='flex-end'
-					alignItems='flex-end'
-					spacing={1}
-				>
-					<Grid item>
-						{ actions }
-					</Grid>
-				</Grid>
-			</DialogActions>
 		</StyledDialog>
 	);
 };

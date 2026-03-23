@@ -1,6 +1,9 @@
 import {
 	AppBar,
+	Button,
 	IconButton,
+	Menu,
+	MenuItem,
 	Toolbar,
 	Typography
 } from '@mui/material';
@@ -20,8 +23,10 @@ import {
 import { drawerActions } from '../../store/slices/drawerSlice';
 import MenuIcon from '@mui/icons-material/Menu';
 import MoreIcon from '@mui/icons-material/MoreVert';
+import RecordIcon from '@mui/icons-material/FiberManualRecord';
+import StopIcon from '@mui/icons-material/Stop';
 import edumeetConfig from '../../utils/edumeetConfig';
-import { openDrawerLabel } from '../translated/translatedComponents';
+import { openDrawerLabel, startRecordingLabel, stopRecordingLabel } from '../translated/translatedComponents';
 import { permissions } from '../../utils/roles';
 import FloatingMenu from '../floatingmenu/FloatingMenu';
 import Login from '../menuitems/Login';
@@ -36,20 +41,18 @@ import FullscreenButton from '../controlbuttons/FullscreenButton';
 import ParticipantsButton from '../controlbuttons/ParticipantsButton';
 import LoginButton from '../controlbuttons/LoginButton';
 import SettingsButton from '../controlbuttons/SettingsButton';
-import FilesharingButton from '../controlbuttons/FilesharingButton';
 import MicButton from '../controlbuttons/MicButton';
 import WebcamButton from '../controlbuttons/WebcamButton';
-import RecordButton from '../controlbuttons/RecordButton';
 import LeaveButton from '../textbuttons/LeaveButton';
 import ScreenshareButton from '../controlbuttons/ScreenshareButton';
-import ExtraVideoButton from '../controlbuttons/ExtraVideoButton';
 import ExtraVideo from '../menuitems/ExtraVideo';
 import Filesharing from '../menuitems/Filesharing';
-import TranscriptionButton from '../controlbuttons/TranscriptionButton';
-import Transcription from '../menuitems/Transcription';
-import { AccessTime } from '@mui/icons-material';
+import TranscriptionMenuItem from '../menuitems/Transcription';
 import Help from '../menuitems/Help';
-import HelpButton from '../controlbuttons/HelpButton';
+import MoreActions from '../moreactions/MoreActions';
+import { recordingActions } from '../../store/slices/recordingSlice';
+import { setLocale, } from '../../store/actions/localeActions';
+import { localeList } from '../../utils/intlManager';
 
 interface TopBarProps {
 	fullscreenEnabled: boolean;
@@ -67,14 +70,6 @@ const LogoImg = styled('img')(({ theme }) => ({
 	marginLeft: 20,
 	[theme.breakpoints.up('sm')]: {
 		display: 'block'
-	}
-}));
-
-const DurationDiv = styled('div')(({ theme }) => ({
-	display: 'flex',
-	padding: theme.spacing(0, 2),
-	'.MuiTypography-root': {
-		marginLeft: theme.spacing(1),
 	}
 }));
 
@@ -118,14 +113,21 @@ const TopBar = ({
 	const fullscreenConsumer = useAppSelector(fullscreenConsumerSelector);
 	const unread = useAppSelector(unreadSelector);
 	const lobbyPeersLength = useAppSelector(lobbyPeersLengthSelector);
+	const recording = useAppSelector((state) => state.recording.recording);
 
 	const [ mobileMoreAnchorEl, setMobileMoreAnchorEl ] = useState<HTMLElement | null>();
+	const [ extraMenuAnchorEl, setExtraMenuAnchorEl ] = useState<HTMLElement | null>();
+	const [ localeMenuAnchorEl, setLocaleMenuAnchorEl ] = useState<HTMLElement | null>();
 
-	const handleMenuClose = () => {
-		setMobileMoreAnchorEl(null);
-	};
+	const locale = useAppSelector((state) => state.settings.locale) ?? 'en';
+	const localeInProgress = useAppSelector((state) => state.room.localeInProgress);
+	const currentLocale = localeList.find((l) => l.locale.some((lc) => locale.startsWith(lc))) ?? localeList[0];
+
+	const handleMenuClose = () => setMobileMoreAnchorEl(null);
+	const handleExtraMenuClose = () => setExtraMenuAnchorEl(null);
 
 	const isMobileMenuOpen = Boolean(mobileMoreAnchorEl);
+	const isExtraMenuOpen = Boolean(extraMenuAnchorEl);
 
 	const roomCreationTimestamp = useAppSelector(roomSessionCreationTimestampSelector);
 	const [ meetingDuration, setMeetingDuration ] = useState<number>(0);
@@ -140,16 +142,12 @@ const TopBar = ({
 		const formattedElements: Array<string> = new Array(3);
 
 		formattedElements[0] = seconds < 10 ? '0'.concat(seconds.toString()) : seconds.toString();
-		formattedElements[1] = (minutes < 10 ? 
+		formattedElements[1] = (minutes < 10 ?
 			'0'.concat(minutes.toString()) : minutes.toString()
 		).concat(':');
 		formattedElements[2] = hours.toString().concat(':');
 
-		const formattedString = (
-			(hours ? formattedElements[2] : '') + formattedElements[1] + formattedElements[0]
-		);
-
-		return formattedString;
+		return (hours ? formattedElements[2] : '') + formattedElements[1] + formattedElements[0];
 	};
 
 	useEffect(() => {
@@ -175,9 +173,7 @@ const TopBar = ({
 	return (
 		<Fragment>
 			<StyledAppBar position='fixed'>
-				<Toolbar sx={{
-					margin: 'auto 0'
-				}}>
+				<Toolbar sx={{ margin: 'auto 0' }}>
 					<PulsingBadge
 						color='secondary'
 						badgeContent={unread}
@@ -197,10 +193,6 @@ const TopBar = ({
 							{edumeetConfig.title}
 						</Typography>
 					}
-					<DurationDiv>
-						<AccessTime />
-						<Typography>{ formatDuration(meetingDuration) }</Typography>
-					</DurationDiv>
 					<GrowingDiv>
 						{ Boolean(fullscreenConsumer) &&
 							<>
@@ -219,11 +211,13 @@ const TopBar = ({
 						}
 					</GrowingDiv>
 					<DesktopDiv>
-						<HelpButton type='iconbutton' />
-						{ canTranscribe && <TranscriptionButton type='iconbutton' /> }
-						<FilesharingButton type='iconbutton' />
-						{ !audioOnly && <ExtraVideoButton type='iconbutton' />}
-						{ canRecord && <RecordButton type='iconbutton' /> }
+						<IconButton
+							color='inherit'
+							size='small'
+							onClick={(event) => setExtraMenuAnchorEl(event.currentTarget)}
+						>
+							<MoreIcon />
+						</IconButton>
 						{ fullscreenEnabled &&
 							<FullscreenButton
 								type='iconbutton'
@@ -236,15 +230,52 @@ const TopBar = ({
 						<LockButton type='iconbutton' />
 						{ canPromote && lobbyPeersLength > 0 && <LobbyButton type='iconbutton' /> }
 						{ loginEnabled && <LoginButton type='iconbutton' /> }
+						<Button
+							color='inherit'
+							size='small'
+							disabled={localeInProgress}
+							onClick={(event) => setLocaleMenuAnchorEl(event.currentTarget)}
+							sx={{ fontWeight: 'bold', minWidth: 0 }}
+						>
+							{ currentLocale.file.toUpperCase() }
+						</Button>
+						<Menu
+							anchorEl={localeMenuAnchorEl}
+							open={Boolean(localeMenuAnchorEl)}
+							onClose={() => setLocaleMenuAnchorEl(null)}
+							anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+							transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+						>
+							{ localeList.map(({ name, file, locale: localeValues }) => (
+								<MenuItem
+									key={file}
+									selected={currentLocale.file === file}
+									onClick={() => {
+										dispatch(setLocale(localeValues[0]));
+										setLocaleMenuAnchorEl(null);
+									}}
+								>
+									{ name }
+								</MenuItem>
+							)) }
+						</Menu>
 					</DesktopDiv>
 					<MobileDiv>
-						{ canRecord && <RecordButton type='iconbutton' /> }
+						{ canRecord && <IconButton
+							color={recording ? 'error' : 'inherit'}
+							size='small'
+							onClick={() => {
+								recording ?
+									dispatch(recordingActions.stop()) :
+									dispatch(recordingActions.start());
+							}}
+						>
+							{ recording ? <StopIcon /> : <RecordIcon /> }
+						</IconButton> }
 						{ canPromote && lobbyPeersLength > 0 && <LobbyButton type='iconbutton' /> }
 						<IconButton
 							aria-haspopup
-							onClick={(event) => {
-								setMobileMoreAnchorEl(event.currentTarget);
-							}}
+							onClick={(event) => setMobileMoreAnchorEl(event.currentTarget)}
 							color='inherit'
 							size='small'
 						>
@@ -255,6 +286,35 @@ const TopBar = ({
 					<LeaveButton />
 				</Toolbar>
 			</StyledAppBar>
+
+			{ /* Extra dropdown menu (desktop) */ }
+			<FloatingMenu
+				anchorEl={extraMenuAnchorEl}
+				open={isExtraMenuOpen}
+				onClose={handleExtraMenuClose}
+				anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+				transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+			>
+				<Help onClick={handleExtraMenuClose} />
+				{ canTranscribe && <TranscriptionMenuItem onClick={handleExtraMenuClose} /> }
+				<Filesharing onClick={handleExtraMenuClose} />
+				{ !audioOnly && <ExtraVideo onClick={handleExtraMenuClose} /> }
+				{ canRecord && (
+					<MenuItem onClick={() => {
+						handleExtraMenuClose();
+						recording ?
+							dispatch(recordingActions.stop()) :
+							dispatch(recordingActions.start());
+					}}>
+						{ recording ? <StopIcon /> : <RecordIcon /> }
+						<MoreActions>
+							{ recording ? stopRecordingLabel() : startRecordingLabel() }
+						</MoreActions>
+					</MenuItem>
+				)}
+			</FloatingMenu>
+
+			{ /* Mobile menu */ }
 			<FloatingMenu
 				anchorEl={mobileMoreAnchorEl}
 				open={isMobileMenuOpen}
@@ -267,7 +327,7 @@ const TopBar = ({
 				<Fullscreen onClick={handleMenuClose} />
 				<ExtraVideo onClick={handleMenuClose} />
 				<Filesharing onClick={handleMenuClose} />
-				{ canTranscribe && <Transcription onClick={handleMenuClose} /> }
+				{ canTranscribe && <TranscriptionMenuItem onClick={handleMenuClose} /> }
 				<Help onClick={handleMenuClose} />
 			</FloatingMenu>
 		</Fragment>

@@ -1,75 +1,90 @@
 import { useEffect, useState } from 'react';
 import {
+	Box,
 	Button,
+	Stack,
+	Tooltip,
 	Typography,
 } from '@mui/material';
+import {
+	Block,
+	Mic,
+	Videocam,
+	AccountCircle,
+	MeetingRoom,
+	Add,
+} from '@mui/icons-material';
 import TextInputField from '../../components/textinputfield/TextInputField';
 import { signalingActions } from '../../store/slices/signalingSlice';
 import { getSignalingUrl } from '../../utils/signalingHelpers';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import {
+	chooseMediaLabel,
 	disableAllMediaLabel,
 	enableAllMediaLabel,
 	enableCameraLabel,
 	enableMicrophoneLabel,
 	joinLabel,
-	yourNameLabel
+	yourNameLabel,
+	roomNameLabel,
 } from '../../components/translated/translatedComponents';
-import { AccountCircle } from '@mui/icons-material';
-import MediaPreview from '../../components/mediapreview/MediaPreview';
-import { stopPreviewWebcam, updatePreviewMic, updatePreviewWebcam } from '../../store/actions/mediaActions';
-import AudioInputChooser from '../../components/devicechooser/AudioInputChooser';
-import VideoInputChooser from '../../components/devicechooser/VideoInputChooser';
 import PrecallDialog from '../../components/precalldialog/PrecallDialog';
 import { roomActions } from '../../store/slices/roomSlice';
 import { settingsActions } from '../../store/slices/settingsSlice';
-import AudioOnlySwitch from '../../components/audioonlyswitch/AudioOnlySwitch';
+
+const ACTIVE_COLOR = '#518029';
+
+type MediaMode = 'none' | 'mic' | 'cam' | 'both';
 
 interface JoinProps {
 	roomId: string;
 }
 
 const Join = ({ roomId }: JoinProps): JSX.Element => {
-	const stateAudioOnly = useAppSelector((state) => state.settings.audioOnly);
 	const peerId = useAppSelector((state) => state.me.id);
-	const {
-		previewMicTrackId,
-		previewWebcamTrackId,
-		videoInProgress
-	} = useAppSelector((state) => state.me);
 	const dispatch = useAppDispatch();
 
 	const stateDisplayName = useAppSelector((state) => state.settings.displayName);
+	const { audioMuted, videoMuted } = useAppSelector((state) => state.settings);
 
+	const [ localRoomId, setLocalRoomId ] = useState(roomId);
 	const [ name, setName ] = useState(stateDisplayName || '');
-	const [ audioOnly, setAudioOnly ] = useState(stateAudioOnly || false);
 	const [ joined, setJoined ] = useState(false);
-	const {
-		audioMuted,
-		videoMuted
-	} = useAppSelector((state) => state.settings);
+
+	const getInitialMode = (): MediaMode => {
+		if (audioMuted && videoMuted) return 'none';
+		if (!audioMuted && videoMuted) return 'mic';
+		if (audioMuted && !videoMuted) return 'cam';
+
+		return 'both';
+	};
+
+	const [ mediaMode, setMediaMode ] = useState<MediaMode>(getInitialMode);
+
+	const handleRoomIdChange = (value: string) => {
+		const trimmed = value.trim();
+
+		setLocalRoomId(trimmed || value);
+
+		if (trimmed) {
+			window.history.replaceState({}, '', `/${trimmed}`);
+		}
+	};
 
 	const handleDisplayNameChange = (value: string) => {
 		setName(value.trim() ? value : value.trim());
 	};
 
-	const handleAudioOnlyChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-		setAudioOnly(event.target.checked);
-
-		if (!videoMuted && event.target.checked)
-			dispatch(stopPreviewWebcam());
-		else if (videoMuted && !event.target.checked)
-			dispatch(updatePreviewWebcam());
-	};
-
 	const handleJoin = () => {
-		const encodedRoomId = encodeURIComponent(roomId);
+		const encodedRoomId = encodeURIComponent(localRoomId);
 		const url = getSignalingUrl(peerId, encodedRoomId);
 
 		setJoined(true);
 
+		dispatch(roomActions.updateRoom({ id: localRoomId }));
 		dispatch(settingsActions.setDisplayName(name));
-		dispatch(settingsActions.setAudioOnly(audioOnly));
+		dispatch(settingsActions.setAudioMuted(mediaMode === 'none' || mediaMode === 'cam'));
+		dispatch(settingsActions.setVideoMuted(mediaMode === 'none' || mediaMode === 'mic'));
 		dispatch(signalingActions.setUrl(url));
 		dispatch(signalingActions.connect());
 	};
@@ -88,7 +103,7 @@ const Join = ({ roomId }: JoinProps): JSX.Element => {
 
 		if (headless) {
 			const myNewURL = window.location.href.split('?')[0];
-			
+
 			window.history.pushState({}, '', myNewURL);
 			handleJoin();
 		}
@@ -96,28 +111,36 @@ const Join = ({ roomId }: JoinProps): JSX.Element => {
 
 	useEffect(() => {
 		dispatch(roomActions.updateRoom({ id: roomId }));
-
-		if (!audioMuted)
-			dispatch(updatePreviewMic());
-
-		if (!videoMuted && !audioOnly)
-			dispatch(updatePreviewWebcam());
 	}, []);
+
+	const mediaModes: { mode: MediaMode; icon: JSX.Element; tooltip: () => string }[] = [
+		{ mode: 'none', icon: <Block />, tooltip: disableAllMediaLabel },
+		{ mode: 'mic', icon: <Mic />, tooltip: enableMicrophoneLabel },
+		{ mode: 'cam', icon: <Videocam />, tooltip: enableCameraLabel },
+		{
+			mode: 'both',
+			icon: (
+				<Stack direction='row' alignItems='center' spacing={0}>
+					<Mic fontSize='small' />
+					<Add sx={{ fontSize: 12 }} />
+					<Videocam fontSize='small' />
+				</Stack>
+			),
+			tooltip: enableAllMediaLabel
+		},
+	];
 
 	return (
 		<PrecallDialog
 			content={
-				<>
-					<MediaPreview audioOnly={audioOnly} />
-					<AudioInputChooser preview />
-					{ !audioOnly && <VideoInputChooser preview /> }
-					<Typography variant='h5'>
-						{ (previewMicTrackId && previewWebcamTrackId) ?
-							enableAllMediaLabel() : previewMicTrackId ?
-								enableMicrophoneLabel() : previewWebcamTrackId ?
-									enableCameraLabel() : disableAllMediaLabel()
-						}
-					</Typography>
+				<Stack spacing={2} mt={1}>
+					<TextInputField
+						label={roomNameLabel()}
+						value={localRoomId}
+						setValue={handleRoomIdChange}
+						onEnter={handleJoin}
+						startAdornment={<MeetingRoom />}
+					/>
 					<TextInputField
 						label={yourNameLabel()}
 						value={name}
@@ -127,24 +150,65 @@ const Join = ({ roomId }: JoinProps): JSX.Element => {
 						autoFocus
 						data-testid='name-input'
 					/>
-					<AudioOnlySwitch
-						checked={audioOnly}
-						disabled={videoInProgress}
-						onChange={handleAudioOnlyChange}
-					/>
-				</>
-			}
-			actions={
-				<Button
-					onClick={handleJoin}
-					variant='contained'
-					color='primary'
-					disabled={!name || joined}
-					fullWidth
-					data-testid='join-button'
-				>
-					{ joinLabel() }
-				</Button>
+					<Typography variant='body2' color='text.secondary'>
+						{ chooseMediaLabel() }
+					</Typography>
+					<Stack direction='row' alignItems='center' justifyContent='space-between'>
+						<Box sx={{
+							display: 'flex',
+							border: 1,
+							borderColor: 'divider',
+							borderRadius: 1,
+							overflow: 'hidden',
+						}}>
+							{ mediaModes.map(({ mode, icon, tooltip }, index) => {
+								const isActive = mediaMode === mode;
+								const isDisable = mode === 'none';
+								const activeBg = isDisable ? 'error.main' : ACTIVE_COLOR;
+
+								return (
+									<Tooltip key={mode} title={tooltip()}>
+										<Box
+											component='button'
+											onClick={() => setMediaMode(mode)}
+											sx={{
+												display: 'flex',
+												alignItems: 'center',
+												justifyContent: 'center',
+												px: 1.25,
+												py: 0.75,
+												border: 0,
+												borderLeft: index > 0 ? 1 : 0,
+												borderColor: 'divider',
+												cursor: 'pointer',
+												bgcolor: isActive ? activeBg : 'transparent',
+												color: isActive ? '#fff' : 'text.secondary',
+												'&:hover': {
+													bgcolor: isActive ? activeBg : 'action.hover',
+												},
+											}}
+										>
+											{ icon }
+										</Box>
+									</Tooltip>
+								);
+							}) }
+						</Box>
+						<Button
+							onClick={handleJoin}
+							variant='contained'
+							disabled={!name || !localRoomId || joined}
+							data-testid='join-button'
+							sx={{
+								bgcolor: ACTIVE_COLOR,
+								'&:hover': { bgcolor: '#3e6120' },
+								'&.Mui-disabled': { bgcolor: 'action.disabledBackground' },
+							}}
+						>
+							{ joinLabel() }
+						</Button>
+					</Stack>
+				</Stack>
 			}
 		/>
 	);

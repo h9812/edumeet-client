@@ -1,0 +1,13 @@
+{
+	"devices.chooseMedia": "メディアを選択",
+	"devices.disableBothMicrophoneAndCamera": "マイクとカメラを無効にする",
+	"devices.enableBothMicrophoneAndCamera": "マイクとカメラを有効にする",
+	"devices.enableOnlyCamera": "カメラのみ有効にする",
+	"devices.enableOnlyMicrophone": "マイクのみ有効にする",
+	"label.join": "参加",
+	"label.roomName": "ルーム名",
+	"label.yourName": "お名前",
+	"label.login": "ログイン",
+	"label.logout": "ログアウト",
+	"label.selectLanguage": "言語を選択"
+}

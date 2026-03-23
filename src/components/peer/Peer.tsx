@@ -73,6 +73,7 @@ const Peer = ({
 					{ micConsumer && <Volume consumer={micConsumer} /> }
 					{ webcamConsumer && <VideoView
 						consumer={webcamConsumer}
+						contain
 					/> }
 					{webcamConsumer && showStats && <PeerStatsView consumerId={webcamConsumer.id}/>}
 				</VideoBox>

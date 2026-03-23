@@ -13,7 +13,12 @@ export const localeList = [
 	{
 		name: 'English',
 		file: 'en',
-		locale: [ 'en', 'en-en' ]
+		locale: [ 'en', 'en-en', 'en-us', 'en-gb' ]
+	},
+	{
+		name: 'Japanese',
+		file: 'ja',
+		locale: [ 'ja', 'ja-jp' ]
 	},
 	{
 		name: 'Czech',

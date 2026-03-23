@@ -52,6 +52,7 @@ const Me = ({
 				<DisplayName disabled={false} displayName={displayName} />
 				{ !(hideSelfView || controlButtonsBar || browser.platform === 'mobile') && (
 					<MediaControls
+						autoHide={false}
 						orientation='vertical'
 						horizontalPlacement='right'
 						verticalPlacement='center'

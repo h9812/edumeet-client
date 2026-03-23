@@ -1,9 +1,6 @@
-import { Box, Paper, styled } from '@mui/material';
-import {
-	useAppSelector,
-} from '../../store/hooks';
-import EscapeMeetingButton from '../controlbuttons/EscapeMeetingButton';
-import RaiseHandButton from '../controlbuttons/RaiseHandButton';
+import { Box, Paper, Typography, styled } from '@mui/material';
+import { useAppSelector } from '../../store/hooks';
+import { meLabel } from '../translated/translatedComponents';
 
 const MeDiv = styled(Paper)(({ theme }) => ({
 	display: 'flex',
@@ -15,7 +12,8 @@ const MeInfoDiv = styled(Box)(({ theme }) => ({
 	display: 'flex',
 	marginLeft: theme.spacing(1),
 	flexGrow: 1,
-	alignItems: 'center'
+	alignItems: 'center',
+	gap: theme.spacing(0.5),
 }));
 
 const MeAvatar = styled('img')({
@@ -33,9 +31,12 @@ const ListMe = (): JSX.Element => {
 	return (
 		<MeDiv>
 			<MeAvatar src={picture ?? '/images/buddy.svg'} />
-			<MeInfoDiv>{ displayName }</MeInfoDiv>
-			<EscapeMeetingButton type='iconbutton' size='small' />
-			<RaiseHandButton type='iconbutton' size='small' />
+			<MeInfoDiv>
+				{ displayName }
+				<Typography variant='caption' color='text.secondary'>
+					({ meLabel() })
+				</Typography>
+			</MeInfoDiv>
 		</MeDiv>
 	);
 };

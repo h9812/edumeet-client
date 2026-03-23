@@ -50,6 +50,9 @@ const StyledVideoBox = styled(Box)<StyledVideoBoxProps>(({
 	backgroundSize: 'auto 85%',
 	backgroundRepeat: 'no-repeat',
 	borderRadius: theme.videoRoundedCorners ? theme.spacing(1) : '0',
+	'&:hover .media-controls-autohide': {
+		opacity: 1,
+	},
 }));
 
 const VideoBox = ({

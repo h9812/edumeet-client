@@ -94,23 +94,7 @@ const ListPeer = ({
 					</IconButton>
 				}
 				<PeerInfoDiv>{ peer.displayName }</PeerInfoDiv>
-				{ /* hasMedia && <StyledChip disabled label={<MediaIcons />} variant='outlined' size='small' /> */ }
-				{ hasScreen && <StyledChip disabled label={<ScreenShareIcon />} variant='outlined' size='small' /> }
-				{ hasVideo && <StyledChip disabled label={<WebcamIcon />} variant='outlined' size='small' /> }
-				{ hasAudio && <StyledChip disabled label={<MicUnMutedIcon />} variant='outlined' size='small' /> }
 				<Volume consumer={micConsumer} small />
-				{ shouldShow && 
-					<IconButton
-						aria-haspopup
-						onClick={(event) => {
-							setMoreAnchorEl(event.currentTarget);
-						}}
-						color='inherit'
-						size='small'
-					>
-						<MoreIcon />
-					</IconButton>
-				}
 			</PeerDiv>
 			<PeerMenu
 				anchorEl={moreAnchorEl}
