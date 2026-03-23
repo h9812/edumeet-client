@@ -1,9 +1,10 @@
 import React, { useEffect } from 'react';
 import ReactDOM from 'react-dom';
-import { Route, BrowserRouter, Routes } from 'react-router-dom';
+import { Route, BrowserRouter, Routes, Navigate } from 'react-router-dom';
 import { RawIntlProvider } from 'react-intl';
 import './index.css';
 import debug from 'debug';
+import randomString from 'random-string';
 import App from './App';
 import {
 	persistor,
@@ -21,7 +22,6 @@ import { supportedBrowsers, deviceInfo, browserInfo } from './utils/deviceInfo';
 import CssBaseline from '@mui/material/CssBaseline';
 import { SnackbarKey, SnackbarProvider, useSnackbar } from 'notistack';
 import UnsupportedBrowser from './views/unsupported/UnsupportedBrowser';
-import LandingPage from './views/landingpage/LandingPage';
 import edumeetConfig from './utils/edumeetConfig';
 import { intl } from './utils/intlManager';
 import { useAppDispatch } from './store/hooks';
@@ -85,7 +85,15 @@ const RootComponent = () => {
 			}>
 				<BrowserRouter>
 					<Routes>
-						<Route path='/' element={<LandingPage />} />
+						<Route
+							path='/'
+							element={
+								<Navigate
+									to={`/${randomString({ length: 8 }).toLowerCase()}`}
+									replace
+								/>
+							}
+						/>
 						<Route path='/:id' element={<App />} />
 					</Routes>
 				</BrowserRouter>
