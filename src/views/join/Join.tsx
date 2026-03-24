@@ -44,6 +44,7 @@ const Join = ({ roomId }: JoinProps): JSX.Element => {
 	const peerId = useAppSelector((state) => state.me.id);
 	const dispatch = useAppDispatch();
 
+	useAppSelector((state) => state.settings.locale);
 	const stateDisplayName = useAppSelector((state) => state.settings.displayName);
 
 	const [ localRoomId, setLocalRoomId ] = useState(roomId);
