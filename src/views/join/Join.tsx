@@ -45,21 +45,32 @@ const Join = ({ roomId }: JoinProps): JSX.Element => {
 	const dispatch = useAppDispatch();
 
 	const stateDisplayName = useAppSelector((state) => state.settings.displayName);
-	const { audioMuted, videoMuted } = useAppSelector((state) => state.settings);
 
 	const [ localRoomId, setLocalRoomId ] = useState(roomId);
 	const [ name, setName ] = useState(stateDisplayName || '');
 	const [ joined, setJoined ] = useState(false);
+	const [ mediaMode, setMediaMode ] = useState<MediaMode>('mic');
+	const [ hasCamera, setHasCamera ] = useState(false);
+	const [ hasMic, setHasMic ] = useState(false);
 
-	const getInitialMode = (): MediaMode => {
-		if (audioMuted && videoMuted) return 'none';
-		if (!audioMuted && videoMuted) return 'mic';
-		if (audioMuted && !videoMuted) return 'cam';
+	useEffect(() => {
+		navigator.mediaDevices.enumerateDevices()
+			.then((devices) => {
+				const camFound = devices.some((d) => d.kind === 'videoinput');
+				const micFound = devices.some((d) => d.kind === 'audioinput');
 
-		return 'both';
-	};
+				setHasCamera(camFound);
+				setHasMic(micFound);
 
-	const [ mediaMode, setMediaMode ] = useState<MediaMode>(getInitialMode);
+				// Adjust default mode based on available devices
+				if (micFound) setMediaMode('mic');
+				else if (camFound) setMediaMode('cam');
+				else setMediaMode('none');
+			})
+			.catch(() => {
+				// Cannot enumerate devices — leave defaults
+			});
+	}, []);
 
 	const handleRoomIdChange = (value: string) => {
 		const trimmed = value.trim();
@@ -113,10 +124,30 @@ const Join = ({ roomId }: JoinProps): JSX.Element => {
 		dispatch(roomActions.updateRoom({ id: roomId }));
 	}, []);
 
-	const mediaModes: { mode: MediaMode; icon: JSX.Element; tooltip: () => string }[] = [
-		{ mode: 'none', icon: <Block />, tooltip: disableAllMediaLabel },
-		{ mode: 'mic', icon: <Mic />, tooltip: enableMicrophoneLabel },
-		{ mode: 'cam', icon: <Videocam />, tooltip: enableCameraLabel },
+	const mediaModes: {
+		mode: MediaMode;
+		icon: JSX.Element;
+		tooltip: () => string;
+		disabled: boolean;
+	}[] = [
+		{
+			mode: 'none',
+			icon: <Block />,
+			tooltip: disableAllMediaLabel,
+			disabled: false,
+		},
+		{
+			mode: 'mic',
+			icon: <Mic />,
+			tooltip: enableMicrophoneLabel,
+			disabled: !hasMic,
+		},
+		{
+			mode: 'cam',
+			icon: <Videocam />,
+			tooltip: enableCameraLabel,
+			disabled: !hasCamera,
+		},
 		{
 			mode: 'both',
 			icon: (
@@ -126,7 +157,8 @@ const Join = ({ roomId }: JoinProps): JSX.Element => {
 					<Videocam fontSize='small' />
 				</Stack>
 			),
-			tooltip: enableAllMediaLabel
+			tooltip: enableAllMediaLabel,
+			disabled: !hasMic || !hasCamera,
 		},
 	];
 
@@ -161,7 +193,7 @@ const Join = ({ roomId }: JoinProps): JSX.Element => {
 							borderRadius: 1,
 							overflow: 'hidden',
 						}}>
-							{ mediaModes.map(({ mode, icon, tooltip }, index) => {
+							{ mediaModes.map(({ mode, icon, tooltip, disabled }, index) => {
 								const isActive = mediaMode === mode;
 								const isDisable = mode === 'none';
 								const activeBg = isDisable ? 'error.main' : ACTIVE_COLOR;
@@ -170,7 +202,7 @@ const Join = ({ roomId }: JoinProps): JSX.Element => {
 									<Tooltip key={mode} title={tooltip()}>
 										<Box
 											component='button'
-											onClick={() => setMediaMode(mode)}
+											onClick={() => !disabled && setMediaMode(mode)}
 											sx={{
 												display: 'flex',
 												alignItems: 'center',
@@ -180,11 +212,12 @@ const Join = ({ roomId }: JoinProps): JSX.Element => {
 												border: 0,
 												borderLeft: index > 0 ? 1 : 0,
 												borderColor: 'divider',
-												cursor: 'pointer',
+												cursor: disabled ? 'not-allowed' : 'pointer',
+												opacity: disabled ? 0.35 : 1,
 												bgcolor: isActive ? activeBg : 'transparent',
 												color: isActive ? '#fff' : 'text.secondary',
 												'&:hover': {
-													bgcolor: isActive ? activeBg : 'action.hover',
+													bgcolor: disabled ? 'transparent' : isActive ? activeBg : 'action.hover',
 												},
 											}}
 										>
