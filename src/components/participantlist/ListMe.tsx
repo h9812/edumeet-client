@@ -38,7 +38,7 @@ const ListMe = (): JSX.Element => {
 
 	return (
 		<MeDiv>
-			<MeAvatar src={picture ?? '/images/buddy.svg'} />
+			<MeAvatar src={picture || '/images/buddy.svg'} />
 			<MeInfoDiv>
 				{ displayName }
 				<Typography variant='caption' color='text.secondary'>

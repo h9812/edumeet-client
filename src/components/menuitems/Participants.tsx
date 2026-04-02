@@ -34,7 +34,7 @@ const Participants = ({
 			>
 				<PeopleIcon />
 			</Badge>
-			<MoreActions>
+			<MoreActions sx={{ color: '#518029' }}>
 				{ showParticipantsLabel() }
 			</MoreActions>
 		</MenuItem>

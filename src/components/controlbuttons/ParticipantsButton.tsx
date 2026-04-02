@@ -29,8 +29,8 @@ const ParticipantsButton = ({
 			{ ...props }
 		>
 			<Badge
-				color='primary'
 				badgeContent={peersLength + 1}
+				sx={{ '& .MuiBadge-badge': { backgroundColor: '#518029', color: '#fff' } }}
 			>
 				<PeopleIcon />
 			</Badge>

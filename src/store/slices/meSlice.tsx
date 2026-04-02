@@ -66,7 +66,7 @@ const meSlice = createSlice({
 			state.sessionId = action.payload;
 		}),
 		setPicture: ((state, action: PayloadAction<string>) => {
-			state.picture = action.payload;
+			state.picture = action.payload || undefined;
 		}),
 		setPreviewWebcamTrackId: ((state, action: PayloadAction<string | undefined>) => {
 			state.previewWebcamTrackId = action.payload;

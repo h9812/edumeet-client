@@ -81,7 +81,7 @@ const ListPeer = ({
 	return (
 		<>
 			<PeerDiv>
-				<PeerAvatar src={peer.picture ?? '/images/buddy.svg'} />
+				<PeerAvatar src={peer.picture || '/images/buddy.svg'} />
 				{ peer.raisedHand &&
 					<IconButton
 						disabled={!isModerator || peer.raisedHandInProgress}

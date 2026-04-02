@@ -295,7 +295,6 @@ const TopBar = ({
 				transformOrigin={{ vertical: 'top', horizontal: 'right' }}
 			>
 				<Help onClick={handleExtraMenuClose} />
-				{ canTranscribe && <TranscriptionMenuItem onClick={handleExtraMenuClose} /> }
 				{ !audioOnly && <ExtraVideo onClick={handleExtraMenuClose} /> }
 				{ canRecord && (
 					<MenuItem onClick={() => {
@@ -324,7 +323,6 @@ const TopBar = ({
 				<Participants onClick={handleMenuClose} />
 				<Fullscreen onClick={handleMenuClose} />
 				<ExtraVideo onClick={handleMenuClose} />
-				{ canTranscribe && <TranscriptionMenuItem onClick={handleMenuClose} /> }
 				<Help onClick={handleMenuClose} />
 			</FloatingMenu>
 		</Fragment>

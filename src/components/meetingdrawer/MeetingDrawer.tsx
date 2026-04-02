@@ -61,7 +61,16 @@ const MeetingDrawerAppBar = styled(AppBar)({
 });
 
 const TabsHeader = styled(Tabs)({
-	flexGrow: 1
+	flexGrow: 1,
+	'& .MuiTab-root': {
+		color: 'rgba(0,0,0,0.5)',
+	},
+	'& .MuiTab-root.Mui-selected': {
+		color: '#000',
+	},
+	'& .MuiTabs-indicator': {
+		backgroundColor: '#000',
+	},
 });
 
 const tabs: ToolAreaTab[] = [
