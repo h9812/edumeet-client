@@ -1,4 +1,5 @@
 import { styled } from '@mui/material';
+import { useState } from 'react';
 import ChatHistory from './ChatHistory';
 import ChatInput from './ChatInput';
 
@@ -11,10 +12,19 @@ const ChatDiv = styled('div')({
 });
 
 const Chat = (): JSX.Element => {
+	const [ sortOrder, setSortOrder ] = useState<'asc' | 'desc'>('asc');
+
+	const handleSortToggle = () => {
+		setSortOrder((prev) => (prev === 'asc' ? 'desc' : 'asc'));
+	};
+
 	return (
 		<ChatDiv>
-			<ChatHistory />
-			<ChatInput />
+			<ChatHistory sortOrder={sortOrder} />
+			<ChatInput
+				sortOrder={sortOrder}
+				onSortToggle={handleSortToggle}
+			/>
 		</ChatDiv>
 	);
 };

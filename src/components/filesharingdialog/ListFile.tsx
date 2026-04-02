@@ -1,16 +1,12 @@
-import { Button, LinearProgress, styled } from '@mui/material';
+import { Download } from '@mui/icons-material';
+import { IconButton, LinearProgress, styled, Typography } from '@mui/material';
 import { saveAs } from 'file-saver';
-import { useContext, useEffect, useState } from 'react';
+import { useContext, useEffect, useRef, useState } from 'react';
 import WebTorrent, { TorrentFile } from 'webtorrent';
 import { useAppDispatch } from '../../store/hooks';
 import { notificationsActions } from '../../store/slices/notificationsSlice';
 import { ServiceContext } from '../../store/store';
-import {
-	downloadFileLabel,
-	meLabel,
-	saveFileErrorLabel,
-	saveFileLabel,
-} from '../translated/translatedComponents';
+import { saveFileErrorLabel } from '../translated/translatedComponents';
 import { FilesharingFile } from '../../utils/types';
 import { roomSessionsActions } from '../../store/slices/roomSessionsSlice';
 
@@ -19,25 +15,28 @@ interface ListFilerProps {
 	isMe: boolean;
 }
 
-const FileDiv = styled('div')(({ theme }) => ({
+const FileDiv = styled('div')({
 	width: '100%',
-	overflow: 'hidden',
 	cursor: 'auto',
 	display: 'flex',
 	flexDirection: 'column',
-	marginTop: theme.spacing(1),
-	marginBottom: theme.spacing(1),
-}));
+});
 
 const FileInfoDiv = styled('div')(({ theme }) => ({
 	display: 'flex',
 	flexDirection: 'row',
-	fontSize: '1rem',
-	paddingLeft: theme.spacing(1),
 	flexGrow: 1,
 	alignItems: 'center',
 	justifyContent: 'space-between',
+	gap: theme.spacing(1),
+	minWidth: 0,
 }));
+
+const fileNameFromMagnet = (magnetURI: string): string => {
+	const match = magnetURI.match(/[?&]dn=([^&]+)/);
+
+	return match ? decodeURIComponent(match[1].replace(/\+/g, ' ')) : '';
+};
 
 const ListFile = ({
 	file,
@@ -49,6 +48,7 @@ const ListFile = ({
 	const [ done, setDone ] = useState<boolean>(false);
 	const [ progress, setProgress ] = useState<number>(0);
 	const [ startInProgress, setStartInProgress ] = useState<boolean>(false);
+	const shouldAutoSave = useRef(false);
 
 	useEffect(() => {
 		if (file.started || isMe) {
@@ -77,16 +77,6 @@ const ListFile = ({
 		}
 	}, [ torrent ]);
 
-	const startTorrent = async (): Promise<void> => {
-		setStartInProgress(true);
-
-		const newTorrent = await fileService.downloadFile(file.magnetURI);
-
-		setTorrent(newTorrent);
-		dispatch(roomSessionsActions.updateFile({ ...file, started: true }));
-		setStartInProgress(false);
-	};
-
 	const saveSubFile = (saveFile: TorrentFile): void => {
 		saveFile.getBlob((err, blob) => {
 			if (err)
@@ -100,38 +90,59 @@ const ListFile = ({
 		});
 	};
 
+	// Auto-save all files when download initiated by this instance completes
+	useEffect(() => {
+		if (done && shouldAutoSave.current && torrent?.files) {
+			shouldAutoSave.current = false;
+			torrent.files.forEach((subFile) => saveSubFile(subFile));
+		}
+	}, [ done, torrent ]);
+
+	const startTorrent = async (): Promise<void> => {
+		setStartInProgress(true);
+		shouldAutoSave.current = true;
+
+		const newTorrent = await fileService.downloadFile(file.magnetURI);
+
+		setTorrent(newTorrent);
+		dispatch(roomSessionsActions.updateFile({ ...file, started: true }));
+		setStartInProgress(false);
+	};
+
 	return (
 		<FileDiv>
 			{ file.started || isMe ?
 				torrent?.files.map((subFile, index) => (
 					<FileDiv key={index}>
 						<FileInfoDiv>
-							({ isMe ? meLabel() : file.displayName }) { subFile.name }
-							{ done && !isMe &&
-								<Button
-									aria-label={saveFileLabel()}
-									variant='contained'
+							<Typography variant='body2' noWrap sx={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis' }}>
+								{subFile.name}
+							</Typography>
+							{ done &&
+								<IconButton
+									size='small'
+									aria-label='Save file'
 									onClick={() => saveSubFile(subFile)}
 								>
-									{ saveFileLabel() }
-								</Button>
+									<Download fontSize='small' />
+								</IconButton>
 							}
 						</FileInfoDiv>
 					</FileDiv>
 				))
 				:
 				<FileInfoDiv>
-					{ file.displayName }
-					{ !file.started &&
-						<Button
-							aria-label={downloadFileLabel()}
-							variant='contained'
-							onClick={startTorrent}
-							disabled={startInProgress}
-						>
-							{ downloadFileLabel() }
-						</Button>
-					}
+					<Typography variant='body2' noWrap sx={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis' }}>
+						{fileNameFromMagnet(file.magnetURI)}
+					</Typography>
+					<IconButton
+						size='small'
+						aria-label='Download file'
+						disabled={startInProgress}
+						onClick={startTorrent}
+					>
+						<Download fontSize='small' />
+					</IconButton>
 				</FileInfoDiv>
 			}
 			{ file.started && !done &&

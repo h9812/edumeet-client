@@ -1,11 +1,12 @@
 import { Button, styled } from '@mui/material';
-import { useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useAppSelector } from '../../store/hooks';
-import { ChatMessage } from '../../utils/types';
+import { chatMessagesSelector, filesSelector } from '../../store/selectors';
+import { ChatMessage, FilesharingFile } from '../../utils/types';
 import ScrollingList from '../scrollinglist/ScrollingList';
 import { chatScrollToBottomLabel } from '../translated/translatedComponents';
+import FileMessage from './FileMessage';
 import Message, { MessageFormat } from './Message';
-import { chatMessagesSelector } from '../../store/selectors';
 
 const ScrollToBottom = styled(Button)(({ theme }) => ({
 	marginLeft: theme.spacing(4),
@@ -13,11 +14,60 @@ const ScrollToBottom = styled(Button)(({ theme }) => ({
 	marginBottom: theme.spacing(1),
 }));
 
-const ChatHistory = (): JSX.Element => {
+type ChatItem =
+	| { kind: 'message'; key: string; data: ChatMessage }
+	| { kind: 'file'; key: string; data: FilesharingFile };
+
+interface ChatHistoryProps {
+	sortOrder: 'asc' | 'desc';
+}
+
+const ChatHistory = ({ sortOrder }: ChatHistoryProps): JSX.Element => {
 	const chatHistoryRef = useRef<ScrollingList>(null);
 	const chatMessages = useAppSelector(chatMessagesSelector);
+	const sharedFiles = useAppSelector(filesSelector);
 	const [ atBottom, setAtBottom ] = useState(true);
 	const meId = useAppSelector((state) => state.me.id);
+
+	const allItems = useMemo((): ChatItem[] => {
+		const items: ChatItem[] = [
+			...chatMessages.map((m, i): ChatItem => ({
+				kind: 'message',
+				key: `msg-${i}-${m.peerId}`,
+				data: m,
+			})),
+			...sharedFiles.map((f, i): ChatItem => ({
+				kind: 'file',
+				key: `file-${i}-${f.magnetURI}`,
+				data: f,
+			})),
+		];
+
+		return items.sort((a, b) => {
+			const ta = a.data.timestamp ?? 0;
+			const tb = b.data.timestamp ?? 0;
+
+			return sortOrder === 'asc' ? ta - tb : tb - ta;
+		});
+	}, [ chatMessages, sharedFiles, sortOrder ]);
+
+	const getMessageFormat = (index: number): MessageFormat => {
+		const item = allItems[index];
+
+		if (item.kind !== 'message') return 'single';
+
+		const curr = item.data.peerId;
+		const prevItem = allItems[index - 1];
+		const nextItem = allItems[index + 1];
+		const prev = prevItem?.kind === 'message' ? prevItem.data.peerId : undefined;
+		const next = nextItem?.kind === 'message' ? nextItem.data.peerId : undefined;
+
+		if (curr !== prev && curr === next) return 'combinedBegin';
+		if (curr === prev && curr === next) return 'combinedMiddle';
+		if (curr === prev && curr !== next) return 'combinedEnd';
+
+		return 'single';
+	};
 
 	return (
 		<>
@@ -27,28 +77,25 @@ const ChatHistory = (): JSX.Element => {
 					setAtBottom(isAtBottom);
 				}}
 			>
-				{ chatMessages.map((message: ChatMessage, i: number) => {
-					const curr = message.peerId;
-					const prev = chatMessages[i - 1]?.peerId;
-					const next = chatMessages[i + 1]?.peerId;
-
-					let format: MessageFormat = 'single';
-
-					if (curr !== prev && curr === next)
-						format = 'combinedBegin';
-					else if (curr === prev && curr === next)
-						format = 'combinedMiddle';
-					else if (curr === prev && curr !== next)
-						format = 'combinedEnd';
+				{ allItems.map((item, i) => {
+					if (item.kind === 'message') {
+						return (
+							<Message
+								key={item.key}
+								time={item.data.timestamp}
+								name={item.data.displayName}
+								text={item.data.text}
+								isMe={item.data.peerId === meId}
+								format={getMessageFormat(i)}
+							/>
+						);
+					}
 
 					return (
-						<Message
-							key={message.timestamp}
-							time={message.timestamp}
-							name={message.displayName}
-							text={message.text}
-							isMe={message.peerId === meId}
-							format={format}
+						<FileMessage
+							key={item.key}
+							file={item.data}
+							isMe={item.data.peerId === meId}
 						/>
 					);
 				})}

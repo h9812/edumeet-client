@@ -46,7 +46,6 @@ import WebcamButton from '../controlbuttons/WebcamButton';
 import LeaveButton from '../textbuttons/LeaveButton';
 import ScreenshareButton from '../controlbuttons/ScreenshareButton';
 import ExtraVideo from '../menuitems/ExtraVideo';
-import Filesharing from '../menuitems/Filesharing';
 import TranscriptionMenuItem from '../menuitems/Transcription';
 import Help from '../menuitems/Help';
 import MoreActions from '../moreactions/MoreActions';
@@ -297,7 +296,6 @@ const TopBar = ({
 			>
 				<Help onClick={handleExtraMenuClose} />
 				{ canTranscribe && <TranscriptionMenuItem onClick={handleExtraMenuClose} /> }
-				<Filesharing onClick={handleExtraMenuClose} />
 				{ !audioOnly && <ExtraVideo onClick={handleExtraMenuClose} /> }
 				{ canRecord && (
 					<MenuItem onClick={() => {
@@ -326,7 +324,6 @@ const TopBar = ({
 				<Participants onClick={handleMenuClose} />
 				<Fullscreen onClick={handleMenuClose} />
 				<ExtraVideo onClick={handleMenuClose} />
-				<Filesharing onClick={handleMenuClose} />
 				{ canTranscribe && <TranscriptionMenuItem onClick={handleMenuClose} /> }
 				<Help onClick={handleMenuClose} />
 			</FloatingMenu>

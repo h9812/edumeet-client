@@ -6,18 +6,19 @@ import DOMPurify from 'dompurify';
 
 export type MessageFormat = 'single' | 'combinedBegin' | 'combinedMiddle' | 'combinedEnd';
 
-const StyledMessage = styled('div')(({ theme }) => ({
+export const StyledMessage = styled('div')(({ theme }) => ({
 	display: 'flex',
 	flexShrink: 0,
 	backgroundColor: theme.chatColor,
-	boxShadow: theme.shadows[2],
+	boxShadow: 'none',
 	padding: theme.spacing(0),
 	wordWrap: 'break-word',
 	wordBreak: 'break-all',
-	width: '66%',
+	width: '100%',
+	borderRadius: 4,
 }));
 
-const StyledMessageAvatar = styled('div')({
+export const StyledMessageAvatar = styled('div')({
 	dispay: 'flex',
 	width: '75px',
 	display: 'flex',
@@ -32,7 +33,7 @@ const StyledMessageAvatar = styled('div')({
 	}
 });
 
-const StyledMessageTime = styled('div')({
+export const StyledMessageTime = styled('div')({
 	width: '75px',
 	alignSelf: 'center',
 	fontSize: '13px',
@@ -42,8 +43,11 @@ const StyledMessageTime = styled('div')({
 	justifyContent: 'center'
 });
 
-const StyledMessageContent = styled('div')(({ theme }) => ({
+export const StyledMessageContent = styled('div')(({ theme }) => ({
 	margin: theme.spacing(1),
+	minWidth: 0,
+	overflow: 'hidden',
+	flex: 1,
 	'& p': {
 		margin: '0'
 	}
@@ -93,22 +97,20 @@ const Message = ({
 				}),
 				...(format === 'single' && {
 					marginTop: theme.spacing(1),
-					borderRadius: `${theme.shape.borderRadius}px`
+					borderRadius: 4,
 				}),
 				...(format === 'combinedBegin' && {
 					marginTop: theme.spacing(1),
-					borderRadius: `${theme.shape.borderRadius}px ${theme.shape.borderRadius}px 0px 0px`,
-					clipPath: `inset(-${theme.spacing(1)} -${theme.spacing(1)} 0px -${theme.spacing(1)})`
+					marginBottom: 1,
+					borderRadius: 4,
 				}),
 				...(format === 'combinedMiddle' && {
-					marginBottom: theme.spacing(0),
-					borderRadius: 0,
-					clipPath: `inset(0px -${theme.spacing(1)} 0px -${theme.spacing(1)})`
+					marginBottom: 1,
+					borderRadius: 4,
 				}),
 				...(format === 'combinedEnd' && {
-					marginBottom: theme.spacing(0),
-					borderRadius: `0px 0px ${theme.shape.borderRadius}px ${theme.shape.borderRadius}px`,
-					clipPath: `inset(0px -${theme.spacing(1)} -${theme.spacing(1)} -${theme.spacing(1)})`
+					marginBottom: 0,
+					borderRadius: 4,
 				})
 			}}
 		>

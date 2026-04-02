@@ -33,22 +33,24 @@ export class FileService {
 	}
 
 	public async sendFiles(files: FileList, sessionId?: string): Promise<string> {
+		const filesArray = Array.from(files);
+
 		return new Promise((resolve, reject) => {
-			createTorrent(files, async (error, torrent) => {
+			createTorrent(filesArray, async (error, torrent) => {
 				if (error)
 					return reject(error);
-	
+
 				const existingTorrent = this.webTorrent?.get(torrent);
-	
+
 				if (existingTorrent) {
 					await this.signalingService.sendRequest('sendFile', { magnetURI: existingTorrent.magnetURI, sessionId })
 						.catch((err) => logger.warn('sendFile, unable to send file [magnetURI:%s, error:%o]', existingTorrent.magnetURI, err));
 
 					return resolve(existingTorrent.magnetURI);
 				}
-	
+
 				this.webTorrent?.seed(
-					files,
+					filesArray,
 					{ /* announceList: [ [ this.tracker ] ] */ },
 					async (newTorrent) => {
 						await this.signalingService.sendRequest('sendFile', { magnetURI: newTorrent.magnetURI, sessionId })
