@@ -80,9 +80,10 @@ const RootComponent = () => {
 		return (<UnsupportedBrowser platform={device.platform} webrtcUnavailable />);
 	} else {
 		return (
-			<SnackbarProvider action={
-				(snackbarKey: SnackbarKey) => <SnackbarCloseButton snackbarKey={snackbarKey} />
-			}>
+			<SnackbarProvider
+				anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+				action={(snackbarKey: SnackbarKey) => <SnackbarCloseButton snackbarKey={snackbarKey} />}
+			>
 				<BrowserRouter>
 					<Routes>
 						<Route

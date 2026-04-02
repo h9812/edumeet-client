@@ -1,4 +1,6 @@
 import React from 'react';
+import PanIcon from '@mui/icons-material/PanTool';
+import { styled } from '@mui/material';
 import { useAppSelector } from '../../store/hooks';
 import { meProducersSelector } from '../../store/selectors';
 import MicButton from '../controlbuttons/MicButton';
@@ -12,6 +14,15 @@ import UnmuteAlert from '../unmutealert/UnmuteAlert';
 import VideoBox from '../videobox/VideoBox';
 import VideoView from '../videoview/VideoView';
 import Volume from '../volume/Volume';
+
+const RaisedHandIndicator = styled('div')(({ theme }) => ({
+	position: 'absolute',
+	bottom: theme.spacing(1),
+	right: theme.spacing(1),
+	zIndex: 22,
+	color: theme.palette.warning.main,
+	display: 'flex',
+}));
 
 interface MeProps {
 	spacing: number;
@@ -38,7 +49,8 @@ const Me = ({
 	// const activeSpeaker = useAppSelector((state) => state.me.id === state.room.activeSpeakerId);
 	const browser = useAppSelector((state) => state.me.browser);
 	const showStats = useAppSelector((state) => state.ui.showStats);
-	
+	const raisedHand = useAppSelector((state) => state.me.raisedHand);
+
 	return (
 		<>
 			<VideoBox
@@ -50,6 +62,11 @@ const Me = ({
 				zIndex={0}
 			>
 				<DisplayName disabled={false} displayName={displayName} />
+				{ raisedHand && (
+					<RaisedHandIndicator>
+						<PanIcon fontSize='small' />
+					</RaisedHandIndicator>
+				) }
 				{ !(hideSelfView || controlButtonsBar || browser.platform === 'mobile') && (
 					<MediaControls
 						autoHide={false}

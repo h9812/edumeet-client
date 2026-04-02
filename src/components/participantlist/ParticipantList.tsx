@@ -28,21 +28,19 @@ const ParticipantList = (): JSX.Element => {
 
 	return (
 		<ParticipantListDiv>
-			{ (inParent || participants.length > 0) &&
-				<>
-					<ListHeader>
-						{ participantsLabel() }
-					</ListHeader>
-					{ inParent && <ListMe /> }
-					<Flipper flipKey={participants}>
-						{ participants.map((peer) => (
-							<Flipped key={peer.id} flipId={peer.id}>
-								<ListPeer key={peer.id} peer={peer} isModerator={isModerator} />
-							</Flipped>
-						)) }
-					</Flipper>
-				</>
-			}
+			{ inParent && <ListMe /> }
+			<>
+				<ListHeader>
+					{ participantsLabel() }
+				</ListHeader>
+				<Flipper flipKey={participants}>
+					{ participants.map((peer) => (
+						<Flipped key={peer.id} flipId={peer.id}>
+							<ListPeer key={peer.id} peer={peer} isModerator={isModerator} />
+						</Flipped>
+					)) }
+				</Flipper>
+			</>
 		</ParticipantListDiv>
 	);
 };

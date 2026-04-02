@@ -3,6 +3,8 @@ import {
 	usePeer,
 	usePeerConsumers
 } from '../../store/hooks';
+import PanIcon from '@mui/icons-material/PanTool';
+import { styled } from '@mui/material';
 import FullscreenVideoButton from '../controlbuttons/FullscreenVideoButton';
 import PeerActionsButton from '../controlbuttons/PeerActionsButton';
 import WindowedVideoButton from '../controlbuttons/WindowedVideoButton';
@@ -14,6 +16,15 @@ import StateIndicators from '../stateindicators/StateIndicators';
 import VideoBox from '../videobox/VideoBox';
 import VideoView from '../videoview/VideoView';
 import Volume from '../volume/Volume';
+
+const RaisedHandIndicator = styled('div')(({ theme }) => ({
+	position: 'absolute',
+	bottom: theme.spacing(1),
+	right: theme.spacing(1),
+	zIndex: 22,
+	color: theme.palette.warning.main,
+	display: 'flex',
+}));
 
 interface PeerProps {
 	key: string;
@@ -51,6 +62,11 @@ const Peer = ({
 					zIndex={0}
 				>
 					<StateIndicators peerId={id} />
+					{ peer?.raisedHand && (
+						<RaisedHandIndicator>
+							<PanIcon fontSize='small' />
+						</RaisedHandIndicator>
+					) }
 					<DisplayName displayName={peer?.displayName} />
 					<MediaControls
 						orientation='vertical'
