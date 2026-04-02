@@ -6,12 +6,15 @@ import TextInputField from '../../components/textinputfield/TextInputField';
 import { joinLabel, roomNameLabel } from '../../components/translated/translatedComponents';
 import PrecallDialog from '../../components/precalldialog/PrecallDialog';
 import StyledBackground from '../../components/StyledBackground';
+import { useAppSelector } from '../../store/hooks';
+import type { RootState } from '../../store/store';
 
 const ACTIVE_COLOR = '#518029';
 
 const LandingPage = (): JSX.Element => {
 	const navigate = useNavigate();
-	const [ roomId, setRoomId ] = useState(randomString({ length: 8 }).toLowerCase());
+	const lastRoomId = useAppSelector((state: RootState) => state.room.id);
+	const [ roomId, setRoomId ] = useState(lastRoomId ?? randomString({ length: 8 }).toLowerCase());
 
 	const onClicked = () => {
 		navigate(`/${roomId}`);
