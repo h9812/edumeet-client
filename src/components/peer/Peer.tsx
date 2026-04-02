@@ -60,6 +60,7 @@ const Peer = ({
 					width={style.width}
 					height={style.height}
 					zIndex={0}
+					avatarSrc={!webcamConsumer && peer?.picture ? peer.picture : undefined}
 				>
 					<StateIndicators peerId={id} />
 					{ peer?.raisedHand && (

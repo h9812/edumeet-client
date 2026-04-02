@@ -4,10 +4,10 @@ import { useAppSelector } from '../../store/hooks';
 import AudioPresetSelector from '../audiopresetselector/AudioPresetSelector';
 import AudioInputChooser from '../devicechooser/AudioInputChooser';
 import VideoInputChooser from '../devicechooser/VideoInputChooser';
-import MediaPreview from '../mediapreview/MediaPreview';
 import { audioSettingsLabel, videoSettingsLabel } from '../translated/translatedComponents';
 import AdvancedAudioSettings from './advancedsettings/AdvancedAudioSettings';
 import AdvancedVideoSettings from './advancedsettings/AdvancedVideoSettings';
+import ProfilePhotoSettings from './ProfilePhotoSettings';
 
 const NestedList = styled(List)(({ theme }) => ({
 	padding: theme.spacing(0, 1.5)
@@ -18,7 +18,7 @@ const MediaSettings = (): JSX.Element => {
 
 	return (
 		<List>
-			{ !audioOnly && <MediaPreview withControls={false} /> }
+			<ProfilePhotoSettings />
 			<ListItem>
 				<ListItemIcon sx={{ minWidth: 29 }}>
 					<HeadsetMic />

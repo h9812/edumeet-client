@@ -68,6 +68,7 @@ interface MessageProps {
 	text?: string;
 	isMe: boolean;
 	format: MessageFormat;
+	picture?: string;
 }
 
 const Message = ({
@@ -75,7 +76,8 @@ const Message = ({
 	name,
 	text,
 	isMe,
-	format
+	format,
+	picture,
 }: MessageProps): JSX.Element => {
 	const theme = useTheme();
 	const linkRenderer = new marked.Renderer();
@@ -116,7 +118,7 @@ const Message = ({
 		>
 			<StyledMessageAvatar>
 				{ (format === 'single' || format ==='combinedBegin') ?
-					<img alt='A' src='/images/buddy.svg' />
+					<img alt='A' src={picture || '/images/buddy.svg'} />
 					:
 					<StyledMessageTime>
 						<FormattedTime value={new Date(time || Date.now())} />

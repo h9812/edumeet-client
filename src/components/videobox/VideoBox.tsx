@@ -10,6 +10,7 @@ interface VideoBoxProps {
 	order?: number;
 	zIndex?: number;
 	activeSpeaker?: boolean;
+	avatarSrc?: string;
 	children?: ReactNode;
 	sx?: SxProps<Theme>;
 }
@@ -22,6 +23,7 @@ type StyledVideoBoxProps = {
 	order?: number;
 	zIndex?: number;
 	activeSpeaker?: boolean;
+	avatarSrc?: string;
 };
 
 const StyledVideoBox = styled(Box)<StyledVideoBoxProps>(({
@@ -33,6 +35,7 @@ const StyledVideoBox = styled(Box)<StyledVideoBoxProps>(({
 	order,
 	zIndex,
 	activeSpeaker,
+	avatarSrc,
 }) => ({
 	position,
 	width,
@@ -45,9 +48,11 @@ const StyledVideoBox = styled(Box)<StyledVideoBoxProps>(({
 	}),
 	boxShadow: theme.videoShadow,
 	backgroundColor: theme.videoBackroundColor,
-	backgroundImage: `url(${theme.videoAvatarImage})`,
-	backgroundPosition: 'bottom',
-	backgroundSize: 'auto 85%',
+	backgroundImage: avatarSrc
+		? `url(${avatarSrc})`
+		: `url(${theme.videoAvatarImage})`,
+	backgroundPosition: avatarSrc ? 'center' : 'bottom',
+	backgroundSize: avatarSrc ? 'contain' : 'auto 85%',
 	backgroundRepeat: 'no-repeat',
 	borderRadius: theme.videoRoundedCorners ? theme.spacing(1) : '0',
 	'&:hover .media-controls-autohide': {
@@ -64,6 +69,7 @@ const VideoBox = ({
 	zIndex,
 	sx,
 	activeSpeaker,
+	avatarSrc,
 	children,
 }: VideoBoxProps): JSX.Element => {
 	return (
@@ -72,6 +78,7 @@ const VideoBox = ({
 			width={width}
 			height={height}
 			activeSpeaker={activeSpeaker}
+			avatarSrc={avatarSrc}
 			order={order}
 			margin={margin}
 			zIndex={zIndex}

@@ -69,11 +69,11 @@ const peersSlice = createSlice({
 					raisedHandTimestamp
 				} = action.payload;
 
-				if (displayName)
+				if (displayName !== undefined)
 					peer.displayName = displayName;
-				if (picture)
-					peer.picture = picture;
-				if (audioOnly)
+				if (picture !== undefined)
+					peer.picture = picture || undefined;
+				if (audioOnly !== undefined)
 					peer.audioOnly = audioOnly;
 				if (videoInProgress !== undefined)
 					peer.videoInProgress = videoInProgress;

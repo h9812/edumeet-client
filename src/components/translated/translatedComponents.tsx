@@ -709,3 +709,33 @@ export const enableNotificationSoundsLabel = (): string => intl.formatMessage({
 	id: 'settings.notificationSounds',
 	defaultMessage: 'Notification sounds'
 });
+
+export const profilePhotoLabel = (): string => intl.formatMessage({
+	id: 'settings.profilePhoto',
+	defaultMessage: 'Profile photo'
+});
+
+export const profilePhotoHintLabel = (): string => intl.formatMessage({
+	id: 'settings.myPhotoLabel',
+	defaultMessage: 'Max. file size: 5MB, accepted: jpg, jpeg, png'
+});
+
+export const profilePhotoSetLabel = (): string => intl.formatMessage({
+	id: 'settings.myPhotoButton',
+	defaultMessage: 'Set my photo'
+});
+
+export const profilePhotoRemoveLabel = (): string => intl.formatMessage({
+	id: 'settings.removePhoto',
+	defaultMessage: 'Remove photo'
+});
+
+export const profilePhotoSizeErrorLabel = (): string => intl.formatMessage({
+	id: 'settings.myPhotoSizeError',
+	defaultMessage: ' file is too large'
+});
+
+export const profilePhotoTypeErrorLabel = (): string => intl.formatMessage({
+	id: 'settings.myPhotoTypeError',
+	defaultMessage: ' is not a supported file extension'
+});

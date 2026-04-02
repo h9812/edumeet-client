@@ -50,6 +50,7 @@ const Me = ({
 	const browser = useAppSelector((state) => state.me.browser);
 	const showStats = useAppSelector((state) => state.ui.showStats);
 	const raisedHand = useAppSelector((state) => state.me.raisedHand);
+	const picture = useAppSelector((state) => state.me.picture);
 
 	return (
 		<>
@@ -60,6 +61,7 @@ const Me = ({
 				width={style.width}
 				height={style.height}
 				zIndex={0}
+				avatarSrc={!webcamProducer && picture ? picture : undefined}
 			>
 				<DisplayName disabled={false} displayName={displayName} />
 				{ raisedHand && (

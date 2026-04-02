@@ -66,6 +66,12 @@ const persistConfig = {
 	whitelist: [ 'settings', 'intl', 'config' ],
 };
 
+const mePersistConfig = {
+	key: 'me',
+	storage,
+	whitelist: [ 'picture' ],
+};
+
 const signalingService = new SignalingService();
 const deviceService = new DeviceService();
 const performanceMonitor = new PerformanceMonitor();
@@ -98,7 +104,7 @@ const reducer = combineReducers({
 	drawer: drawerSlice.reducer,
 	notifications: notificationsSlice.reducer,
 	lobbyPeers: lobbyPeersSlice.reducer,
-	me: meSlice.reducer,
+	me: persistReducer(mePersistConfig, meSlice.reducer),
 	peers: peersSlice.reducer,
 	permissions: permissionsSlice.reducer,
 	producers: producersSlice.reducer,

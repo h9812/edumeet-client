@@ -7,6 +7,7 @@ import ScrollingList from '../scrollinglist/ScrollingList';
 import { chatScrollToBottomLabel } from '../translated/translatedComponents';
 import FileMessage from './FileMessage';
 import Message, { MessageFormat } from './Message';
+import { RootState } from '../../store/store';
 
 const ScrollToBottom = styled(Button)(({ theme }) => ({
 	marginLeft: theme.spacing(4),
@@ -28,6 +29,14 @@ const ChatHistory = ({ sortOrder }: ChatHistoryProps): JSX.Element => {
 	const sharedFiles = useAppSelector(filesSelector);
 	const [ atBottom, setAtBottom ] = useState(true);
 	const meId = useAppSelector((state) => state.me.id);
+	const mePicture = useAppSelector((state) => state.me.picture);
+	const peers = useAppSelector((state: RootState) => state.peers);
+
+	const getPeerPicture = (peerId: string): string | undefined => {
+		if (peerId === meId) return mePicture || undefined;
+
+		return peers[peerId]?.picture || undefined;
+	};
 
 	const allItems = useMemo((): ChatItem[] => {
 		const items: ChatItem[] = [
@@ -87,6 +96,7 @@ const ChatHistory = ({ sortOrder }: ChatHistoryProps): JSX.Element => {
 								text={item.data.text}
 								isMe={item.data.peerId === meId}
 								format={getMessageFormat(i)}
+								picture={getPeerPicture(item.data.peerId)}
 							/>
 						);
 					}
