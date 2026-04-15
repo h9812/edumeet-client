@@ -20,7 +20,6 @@ import { settingsActions } from './store/slices/settingsSlice';
 import edumeetConfig from './utils/edumeetConfig';
 import { initFirebase, getFirebaseAuth } from './services/firebaseService';
 import { signInWithCustomToken, onAuthStateChanged, setPersistence, browserSessionPersistence } from 'firebase/auth';
-import FirebaseLogin from './views/firebaseLogin/FirebaseLogin';
 import { Logger } from 'edumeet-common';
 
 const logger = new Logger('App');
@@ -67,7 +66,7 @@ const App = (): JSX.Element => {
 		let unsubscribe: (() => void) | undefined;
 
 		const initAuth = async () => {
-			logger.debug('initAuth: start [hasOpener: %s]', !!window.opener);
+			logger.debug('initAuth: start [hasOpener: %s]', Boolean(window.opener));
 			await setPersistence(auth, browserSessionPersistence);
 			logger.debug('initAuth: setPersistence done [authResolved: %s, postMsgAuth: %s, isLoggedIn: %s]',
 				authResolvedRef.current, postMessageAuthRef.current, isLoggedIn
@@ -97,7 +96,7 @@ const App = (): JSX.Element => {
 			logger.debug('initAuth: subscribing to onAuthStateChanged');
 			unsubscribe = onAuthStateChanged(auth, async (user) => {
 				logger.debug('onAuthStateChanged fired [user: %s, authResolved: %s, postMsgAuth: %s, authToken: %s]',
-					user ? user.uid : 'null', authResolvedRef.current, postMessageAuthRef.current, !!authTokenRef.current
+					user ? user.uid : 'null', authResolvedRef.current, postMessageAuthRef.current, Boolean(authTokenRef.current)
 				);
 
 				if (user) {
@@ -153,10 +152,10 @@ const App = (): JSX.Element => {
 						logger.debug('handleMessage: received edumeet-login from opener (Flow 1 Timeline B)');
 						clearTimeout(timeout);
 
-						const { token: authToken, displayName, picture } = data.data;
+						const { token: receivedToken, displayName, picture } = data.data;
 
-						if (authToken) {
-							dispatch(meActions.setAuthToken(authToken));
+						if (receivedToken) {
+							dispatch(meActions.setAuthToken(receivedToken));
 						}
 						if (displayName) dispatch(settingsActions.setDisplayName(displayName));
 						if (picture) dispatch(meActions.setPicture(picture));
@@ -191,7 +190,7 @@ const App = (): JSX.Element => {
 		// window.opener branch doesn't re-enter waiting-postmessage later.
 		if (isLoggedIn && authState !== 'authenticated') {
 			logger.debug('isLoggedIn effect: isLoggedIn=true but authState=%s [authResolved: %s, postMsgAuth: %s, hasOpener: %s]',
-				authState, authResolvedRef.current, postMessageAuthRef.current, !!window.opener
+				authState, authResolvedRef.current, postMessageAuthRef.current, Boolean(window.opener)
 			);
 			if (window.opener && edumeetConfig.firebase) {
 				logger.debug('isLoggedIn effect: Flow 1 Timeline A detected — setting refs before onAuthStateChanged fires');
@@ -246,6 +245,16 @@ const App = (): JSX.Element => {
 		};
 	}, []);
 
+	useEffect(() => {
+		if (authState !== 'login-required') return;
+		if (!edumeetConfig.baseFELoginUrl) return;
+
+		logger.debug('login-required: redirecting to base-fe login [url: %s]', edumeetConfig.baseFELoginUrl);
+		const returnTo = encodeURIComponent(window.location.href);
+
+		window.location.href = `${edumeetConfig.baseFELoginUrl}?returnTo=${returnTo}`;
+	}, [ authState ]);
+
 	const handleFileDrop = (event: React.DragEvent<HTMLDivElement>): void => {
 		if (roomState !== 'joined') return;
 
@@ -263,14 +272,6 @@ const App = (): JSX.Element => {
 		return (
 			<StyledBackground>
 				<></>
-			</StyledBackground>
-		);
-	}
-
-	if (authState === 'login-required' && edumeetConfig.firebase) {
-		return (
-			<StyledBackground>
-				<FirebaseLogin onLoginSuccess={handleAuthSuccess} />
 			</StyledBackground>
 		);
 	}
