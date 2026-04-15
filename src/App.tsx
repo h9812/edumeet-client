@@ -44,10 +44,12 @@ const App = (): JSX.Element => {
 	);
 	const authResolvedRef = useRef(false);
 	const postMessageAuthRef = useRef(false);
-	// Tracks current isLoggedIn for use inside async closures (survives across re-renders).
-	const isLoggedInRef = useRef(isLoggedIn);
+	// Tracks current authToken for use inside async closures.
+	// authToken is NOT reset by permissionsSlice on roomState='left', unlike isLoggedIn.
+	const authToken = useAppSelector((state) => state.me.authToken);
+	const authTokenRef = useRef(authToken);
 
-	isLoggedInRef.current = isLoggedIn;
+	authTokenRef.current = authToken;
 
 	const handleAuthSuccess = useCallback((idToken: string, displayName?: string) => {
 		dispatch(meActions.setAuthToken(idToken));
@@ -94,8 +96,8 @@ const App = (): JSX.Element => {
 
 			logger.debug('initAuth: subscribing to onAuthStateChanged');
 			unsubscribe = onAuthStateChanged(auth, async (user) => {
-				logger.debug('onAuthStateChanged fired [user: %s, authResolved: %s, postMsgAuth: %s, isLoggedIn: %s]',
-					user ? user.uid : 'null', authResolvedRef.current, postMessageAuthRef.current, isLoggedInRef.current
+				logger.debug('onAuthStateChanged fired [user: %s, authResolved: %s, postMsgAuth: %s, authToken: %s]',
+					user ? user.uid : 'null', authResolvedRef.current, postMessageAuthRef.current, !!authTokenRef.current
 				);
 
 				if (user) {
@@ -124,12 +126,14 @@ const App = (): JSX.Element => {
 
 					return;
 				} else if (window.opener) {
-					if (isLoggedInRef.current) {
-						// Component remounted (e.g. after leave room) but Redux isLoggedIn still true.
+					if (authTokenRef.current) {
+						// Component remounted (e.g. after leave room) — authToken still in Redux
+						// (permissionsSlice resets loggedIn on 'left' but meSlice keeps authToken).
 						// Restore auth state without waiting for a new postMessage.
-						logger.debug('onAuthStateChanged: null but isLoggedIn=true in Redux — remount case, restoring auth');
+						logger.debug('onAuthStateChanged: null but authToken exists — remount case, restoring auth');
 						postMessageAuthRef.current = true;
 						authResolvedRef.current = true;
+						dispatch(permissionsActions.setLoggedIn(true));
 						setAuthState('authenticated');
 
 						return;
