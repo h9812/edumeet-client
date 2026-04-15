@@ -61,14 +61,18 @@ const App = (): JSX.Element => {
 		let unsubscribe: (() => void) | undefined;
 
 		const initAuth = async () => {
+			logger.debug('initAuth: start [hasOpener: %s]', !!window.opener);
 			await setPersistence(auth, browserSessionPersistence);
+			logger.debug('initAuth: setPersistence done [authResolved: %s, postMsgAuth: %s, isLoggedIn: %s]',
+				authResolvedRef.current, postMessageAuthRef.current, isLoggedIn
+			);
 
 			const hash = new URLSearchParams(window.location.hash.slice(1));
 			const customToken = hash.get('customToken');
 			const displayNameFromHash = hash.get('displayName');
 
 			if (customToken) {
-				logger.debug('found customToken in URL hash, signing in...');
+				logger.debug('initAuth: found customToken in URL hash, signing in... (Flow 2a)');
 				try {
 					const cred = await signInWithCustomToken(auth, customToken);
 					const idToken = await cred.user.getIdToken();
@@ -79,37 +83,48 @@ const App = (): JSX.Element => {
 					window.history.replaceState(null, '', window.location.pathname);
 					handleAuthSuccess(idToken, cred.user.displayName || undefined);
 				} catch (error) {
-					logger.error('signInWithCustomToken failed [error: %o]', error);
+					logger.error('initAuth: signInWithCustomToken failed [error: %o]', error);
 					setAuthState('login-required');
 				}
 			}
 
+			logger.debug('initAuth: subscribing to onAuthStateChanged');
 			unsubscribe = onAuthStateChanged(auth, async (user) => {
+				logger.debug('onAuthStateChanged fired [user: %s, authResolved: %s, postMsgAuth: %s]',
+					user ? user.uid : 'null', authResolvedRef.current, postMessageAuthRef.current
+				);
+
 				if (user) {
 					if (!authResolvedRef.current) {
-						logger.debug('onAuthStateChanged: user exists [uid: %s]', user.uid);
+						logger.debug('onAuthStateChanged: existing Firebase session detected (Flow 2b) [uid: %s]', user.uid);
 						const idToken = await user.getIdToken();
 
 						handleAuthSuccess(idToken, user.displayName || undefined);
+					} else {
+						logger.debug('onAuthStateChanged: user exists but auth already resolved, skipping');
 					}
 				} else if (authResolvedRef.current) {
 					if (postMessageAuthRef.current) {
-						// Auth via postMessage — Firebase null doesn't affect us
+						logger.debug('onAuthStateChanged: null but postMessage auth active — ignoring Firebase sign-out');
+
 						return;
 					}
-					logger.debug('onAuthStateChanged: user signed out, resetting auth');
+					logger.debug('onAuthStateChanged: Firebase user signed out, resetting auth');
 					authResolvedRef.current = false;
 					dispatch(meActions.setAuthToken(undefined));
 					dispatch(permissionsActions.setLoggedIn(false));
 					dispatch(settingsActions.setDisplayName(''));
 					setAuthState('login-required');
 				} else if (customToken) {
+					logger.debug('onAuthStateChanged: null after customToken flow, skipping');
+
 					return;
 				} else if (window.opener) {
-					logger.debug('onAuthStateChanged: no user, has opener, waiting for postMessage...');
+					logger.debug('onAuthStateChanged: no user, has opener — waiting for postMessage (Flow 1 Timeline B)');
 					setAuthState('waiting-postmessage');
 
 					const timeout = setTimeout(() => {
+						logger.debug('postMessage timeout: no edumeet-login received within %dms → login-required', POST_MESSAGE_TIMEOUT);
 						setAuthState('login-required');
 					}, POST_MESSAGE_TIMEOUT);
 
@@ -117,6 +132,7 @@ const App = (): JSX.Element => {
 						if (edumeetConfig.baseFEOrigin && origin !== edumeetConfig.baseFEOrigin) return;
 						if (data?.type !== 'edumeet-login') return;
 
+						logger.debug('handleMessage: received edumeet-login from opener (Flow 1 Timeline B)');
 						clearTimeout(timeout);
 
 						const { token: authToken, displayName, picture } = data.data;
@@ -140,7 +156,7 @@ const App = (): JSX.Element => {
 
 					window.location.href = `${edumeetConfig.baseFELoginUrl}?returnTo=${returnTo}`;
 				} else {
-					logger.debug('onAuthStateChanged: no user, showing login UI');
+					logger.debug('onAuthStateChanged: no user, no opener, no baseFELoginUrl — showing login UI');
 					setAuthState('login-required');
 				}
 			});
@@ -152,9 +168,18 @@ const App = (): JSX.Element => {
 	}, []);
 
 	useEffect(() => {
-		// startListeners can receive edumeet-login before App's local listener.
-		// If Redux auth is already set, unblock UI immediately.
+		// startListeners can receive edumeet-login before App's local listener (Timeline A race).
+		// If Redux auth is already set, mark as postMessage auth so onAuthStateChanged
+		// window.opener branch doesn't re-enter waiting-postmessage later.
 		if (isLoggedIn && authState !== 'authenticated') {
+			logger.debug('isLoggedIn effect: isLoggedIn=true but authState=%s [authResolved: %s, postMsgAuth: %s, hasOpener: %s]',
+				authState, authResolvedRef.current, postMessageAuthRef.current, !!window.opener
+			);
+			if (window.opener && edumeetConfig.firebase) {
+				logger.debug('isLoggedIn effect: Flow 1 Timeline A detected — setting refs before onAuthStateChanged fires');
+				postMessageAuthRef.current = true;
+				authResolvedRef.current = true;
+			}
 			setAuthState('authenticated');
 		}
 	}, [ isLoggedIn, authState ]);
