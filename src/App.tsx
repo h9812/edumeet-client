@@ -43,6 +43,7 @@ const App = (): JSX.Element => {
 		edumeetConfig.firebase ? 'loading' : 'authenticated'
 	);
 	const authResolvedRef = useRef(false);
+	const postMessageAuthRef = useRef(false);
 
 	const handleAuthSuccess = useCallback((idToken: string, displayName?: string) => {
 		dispatch(meActions.setAuthToken(idToken));
@@ -92,6 +93,10 @@ const App = (): JSX.Element => {
 						handleAuthSuccess(idToken, user.displayName || undefined);
 					}
 				} else if (authResolvedRef.current) {
+					if (postMessageAuthRef.current) {
+						// Auth via postMessage — Firebase null doesn't affect us
+						return;
+					}
 					logger.debug('onAuthStateChanged: user signed out, resetting auth');
 					authResolvedRef.current = false;
 					dispatch(meActions.setAuthToken(undefined));
@@ -122,6 +127,8 @@ const App = (): JSX.Element => {
 						if (displayName) dispatch(settingsActions.setDisplayName(displayName));
 						if (picture) dispatch(meActions.setPicture(picture));
 						dispatch(permissionsActions.setLoggedIn(true));
+						postMessageAuthRef.current = true;
+						authResolvedRef.current = true;
 						setAuthState('authenticated');
 						window.removeEventListener('message', handleMessage);
 					};
@@ -161,6 +168,13 @@ const App = (): JSX.Element => {
 
 		if (wasInRoom && (roomState === 'new' || roomState === 'left') && edumeetConfig.firebase) {
 			logger.debug('left meeting, re-authenticating before next join');
+
+			if (postMessageAuthRef.current) {
+				// Authenticated via postMessage — session is managed by base-fe opener.
+				// Don't sign out Firebase or redirect; just let user re-join via Join screen.
+				return;
+			}
+
 			const firebaseAuth = getFirebaseAuth();
 
 			if (firebaseAuth) {
