@@ -28,6 +28,7 @@
 		"dompurify": "^2.3.6",
 		"edumeet-common": "edumeet/edumeet-common",
 		"file-saver": "^2.0.5",
+		"firebase": "^12.12.0",
 		"fscreen": "^1.2.0",
 		"hark": "^1.2.3",
 		"https-browserify": "^1.0.0",
@@ -36,6 +37,7 @@
 		"notistack": "^2.0.4",
 		"random-string": "^0.2.0",
 		"react": "^18.2.0",
+		"react-app-rewired": "^2.2.1",
 		"react-dom": "^18.2.0",
 		"react-flip-toolkit": "^7.0.13",
 		"react-intl": "^6.0.4",
@@ -52,9 +54,9 @@
 		"ws": "^8.8.0"
 	},
 	"scripts": {
-		"start": "HTTPS=true PORT=4443 react-scripts --openssl-legacy-provider start",
-		"build": "react-scripts --openssl-legacy-provider build",
-		"test": "react-scripts --trace-warnings --openssl-legacy-provider test --silent",
+		"start": "HTTPS=true PORT=4443 react-app-rewired --openssl-legacy-provider start",
+		"build": "react-app-rewired --openssl-legacy-provider build",
+		"test": "react-app-rewired --trace-warnings --openssl-legacy-provider test --silent",
 		"lint": "eslint . --ext .ts,.tsx",
 		"eject": "react-scripts eject"
 	},

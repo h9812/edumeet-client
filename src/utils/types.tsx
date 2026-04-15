@@ -2,7 +2,8 @@ import { ThemeOptions } from '@mui/material';
 import { ClientMonitorConfig } from '@observertc/client-monitor-js';
 
 export const defaultEdumeetConfig: EdumeetConfig = {
-	loginEnabled: false,
+	loginEnabled: true,
+	loginRequired: true,
 	developmentPort: 8443,
 	productionPort: 443,
 	serverHostname: undefined,
@@ -102,11 +103,24 @@ export const defaultEdumeetConfig: EdumeetConfig = {
 	}
 };
 
+export interface FirebaseClientConfig {
+	apiKey: string;
+	authDomain: string;
+	projectId: string;
+	storageBucket?: string;
+	messagingSenderId?: string;
+	appId: string;
+}
+
 export interface EdumeetConfig {
 	loginEnabled: boolean;
+	loginRequired: boolean;
 	developmentPort: number;
 	productionPort: number;
 	serverHostname?: string;
+	baseFEOrigin?: string;
+	baseFELoginUrl?: string;
+	firebase?: FirebaseClientConfig;
 	lastN: number;
 	hideNonVideo: boolean;
 	resolution: Resolution;

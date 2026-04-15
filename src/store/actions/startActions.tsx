@@ -17,6 +17,8 @@ import { devicesChangedLabel } from '../../components/translated/translatedCompo
 import { permissionsActions } from '../slices/permissionsSlice';
 import { settingsActions } from '../slices/settingsSlice';
 import { Logger } from 'edumeet-common';
+import edumeetConfig from '../../utils/edumeetConfig';
+import { getFirebaseAuth } from '../../services/firebaseService';
 
 const logger = new Logger('listenerActions');
 
@@ -292,21 +294,49 @@ export const startListeners = (): AppThunk<Promise<void>> => async (
 
 	document.addEventListener('keyup', keyupListener);
 
-	messageListener = ({ data }: MessageEvent) => {
+	messageListener = ({ data, origin }: MessageEvent) => {
+		if (edumeetConfig.baseFEOrigin && origin !== edumeetConfig.baseFEOrigin) return;
+
 		if (data.type === 'edumeet-login') {
 			const { data: {
+				token: authToken,
 				displayName,
 				picture,
 			} } = data;
 
+			if (authToken) {
+				dispatch(meActions.setAuthToken(authToken));
+			}
 			displayName && dispatch(settingsActions.setDisplayName(displayName));
 			picture && dispatch(meActions.setPicture(picture));
 			dispatch(permissionsActions.setLoggedIn(true));
-		} else if (data.type === 'edumeet-logout')
+		} else if (data.type === 'edumeet-logout') {
+			dispatch(meActions.setAuthToken(undefined));
 			dispatch(permissionsActions.setLoggedIn(false));
+
+			const firebaseAuth = getFirebaseAuth();
+
+			if (firebaseAuth) {
+				firebaseAuth.signOut().catch((e: unknown) => {
+					logger.error('signOut failed [error: %o]', e as Record<string, unknown>);
+				});
+			}
+		}
 	};
 
 	window.addEventListener('message', messageListener);
+
+	if (window.opener && edumeetConfig.baseFEOrigin) {
+		try {
+			window.opener.postMessage(
+				{ type: 'edumeet-ready' },
+				edumeetConfig.baseFEOrigin
+			);
+			logger.debug('sent edumeet-ready to opener');
+		} catch (error: unknown) {
+			logger.error('failed to send edumeet-ready [error: %o]', error as Record<string, unknown>);
+		}
+	}
 };
 
 export const stopListeners = (): AppThunk<Promise<void>> => async (

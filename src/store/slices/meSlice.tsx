@@ -8,6 +8,7 @@ export interface MeState {
 	sessionId: string;
 	browser: Omit<DeviceInfo, 'bowser'>;
 	picture?: string;
+	authToken?: string;
 	previewWebcamTrackId?: string;
 	previewMicTrackId?: string;
 	canSendMic: boolean;
@@ -116,6 +117,9 @@ const meSlice = createSlice({
 		}),
 		setAudioOnlyInProgress: ((state, action: PayloadAction<boolean>) => {
 			state.audioOnlyInProgress = action.payload;
+		}),
+		setAuthToken: ((state, action: PayloadAction<string | undefined>) => {
+			state.authToken = action.payload;
 		}),
 	},
 });

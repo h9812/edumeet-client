@@ -38,5 +38,6 @@ export default {
 	...defaultEdumeetConfig,
 	...window.config,
 	theme: { ...defaultEdumeetConfig.theme, ...window.config?.theme },
-	observertc: { ...defaultEdumeetConfig.observertc, ...window.config?.observertc }
+	observertc: { ...defaultEdumeetConfig.observertc, ...window.config?.observertc },
+	...(window.config?.firebase ? { firebase: window.config.firebase } : {}),
 };

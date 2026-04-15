@@ -10,6 +10,25 @@ var config = {
 	// If ability to log in is enabled.
 	loginEnabled: true,
 
+	// If true, authentication is required to join rooms.
+	loginRequired: true,
+
+	// Base FE origin for SSO via postMessage. Must match exactly.
+	baseFEOrigin: 'https://your-base-fe.domain.com',
+
+	// Base FE login URL for redirect flow (Flow 2a).
+	baseFELoginUrl: 'https://your-base-fe.domain.com/auth/login',
+
+	// Firebase client config — must match the same Firebase project as base-fe.
+	firebase: {
+		apiKey: 'YOUR_API_KEY',
+		authDomain: 'YOUR_PROJECT.firebaseapp.com',
+		projectId: 'YOUR_PROJECT_ID',
+		storageBucket: 'YOUR_PROJECT.firebasestorage.app',
+		messagingSenderId: 'YOUR_SENDER_ID',
+		appId: 'YOUR_APP_ID',
+	},
+
 	// The development server listening port.
 	developmentPort: 8443,
 

@@ -87,9 +87,11 @@ const Join = ({ roomId }: JoinProps): JSX.Element => {
 		setName(value.trim() ? value : value.trim());
 	};
 
+	const authToken = useAppSelector((state) => state.me.authToken);
+
 	const handleJoin = () => {
 		const encodedRoomId = encodeURIComponent(localRoomId);
-		const url = getSignalingUrl(peerId, encodedRoomId);
+		const url = getSignalingUrl(peerId, encodedRoomId, authToken);
 
 		setJoined(true);
 
