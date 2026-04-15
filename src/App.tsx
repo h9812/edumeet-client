@@ -44,6 +44,10 @@ const App = (): JSX.Element => {
 	);
 	const authResolvedRef = useRef(false);
 	const postMessageAuthRef = useRef(false);
+	// Tracks current isLoggedIn for use inside async closures (survives across re-renders).
+	const isLoggedInRef = useRef(isLoggedIn);
+
+	isLoggedInRef.current = isLoggedIn;
 
 	const handleAuthSuccess = useCallback((idToken: string, displayName?: string) => {
 		dispatch(meActions.setAuthToken(idToken));
@@ -90,8 +94,8 @@ const App = (): JSX.Element => {
 
 			logger.debug('initAuth: subscribing to onAuthStateChanged');
 			unsubscribe = onAuthStateChanged(auth, async (user) => {
-				logger.debug('onAuthStateChanged fired [user: %s, authResolved: %s, postMsgAuth: %s]',
-					user ? user.uid : 'null', authResolvedRef.current, postMessageAuthRef.current
+				logger.debug('onAuthStateChanged fired [user: %s, authResolved: %s, postMsgAuth: %s, isLoggedIn: %s]',
+					user ? user.uid : 'null', authResolvedRef.current, postMessageAuthRef.current, isLoggedInRef.current
 				);
 
 				if (user) {
@@ -120,6 +124,16 @@ const App = (): JSX.Element => {
 
 					return;
 				} else if (window.opener) {
+					if (isLoggedInRef.current) {
+						// Component remounted (e.g. after leave room) but Redux isLoggedIn still true.
+						// Restore auth state without waiting for a new postMessage.
+						logger.debug('onAuthStateChanged: null but isLoggedIn=true in Redux — remount case, restoring auth');
+						postMessageAuthRef.current = true;
+						authResolvedRef.current = true;
+						setAuthState('authenticated');
+
+						return;
+					}
 					logger.debug('onAuthStateChanged: no user, has opener — waiting for postMessage (Flow 1 Timeline B)');
 					setAuthState('waiting-postmessage');
 
