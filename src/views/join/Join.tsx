@@ -113,6 +113,10 @@ const Join = ({ roomId }: JoinProps): JSX.Element => {
 	}, []);
 
 	useEffect(() => {
+		if (stateDisplayName) setName(stateDisplayName);
+	}, [ stateDisplayName ]);
+
+	useEffect(() => {
 		const headless = new URL(window.location.href).searchParams.get('headless');
 
 		if (headless) {

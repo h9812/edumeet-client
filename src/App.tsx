@@ -149,7 +149,6 @@ const App = (): JSX.Element => {
 						if (edumeetConfig.baseFEOrigin && origin !== edumeetConfig.baseFEOrigin) return;
 						if (data?.type !== 'edumeet-login') return;
 
-						logger.debug('handleMessage: received edumeet-login from opener (Flow 1 Timeline B)');
 						clearTimeout(timeout);
 
 						const { token: receivedToken, displayName, picture } = data.data;
