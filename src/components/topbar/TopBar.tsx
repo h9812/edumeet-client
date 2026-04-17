@@ -39,7 +39,6 @@ import LobbyButton from '../controlbuttons/LobbyButton';
 import LockButton from '../controlbuttons/LockButton';
 import FullscreenButton from '../controlbuttons/FullscreenButton';
 import ParticipantsButton from '../controlbuttons/ParticipantsButton';
-import LoginButton from '../controlbuttons/LoginButton';
 import SettingsButton from '../controlbuttons/SettingsButton';
 import MicButton from '../controlbuttons/MicButton';
 import WebcamButton from '../controlbuttons/WebcamButton';
@@ -228,13 +227,19 @@ const TopBar = ({
 						<SettingsButton type='iconbutton' />
 						<LockButton type='iconbutton' />
 						{ canPromote && lobbyPeersLength > 0 && <LobbyButton type='iconbutton' /> }
-						{ loginEnabled && <LoginButton type='iconbutton' /> }
 						<Button
 							color='inherit'
 							size='small'
 							disabled={localeInProgress}
 							onClick={(event) => setLocaleMenuAnchorEl(event.currentTarget)}
-							sx={{ fontWeight: 'bold', minWidth: 0 }}
+							sx={{
+								fontWeight: 'bold',
+								minWidth: 0,
+								color: '#fff',
+								'&.Mui-disabled': {
+									color: 'rgba(255, 255, 255, 0.7)'
+								}
+							}}
 						>
 							{ currentLocale.file.toUpperCase() }
 						</Button>
